@@ -236,7 +236,7 @@ jobs:
         pip install webdriver-manager
     
     - name: Run promotion code test
-      run: python git_sele7.py
+      run: python git_sele8.py
     
     - name: Upload results
       uses: actions/upload-artifact@v3
