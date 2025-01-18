@@ -10,7 +10,7 @@ import math
 def test_number_range(start_num, end_num, url):
     driver = webdriver.Chrome()
     driver.get(url)
-    driver.maximize_window()
+    #driver.maximize_window()
 
     results = {
         'working': [],
@@ -114,9 +114,25 @@ if __name__ == "__main__":
     # Create or clear the successful_codes.txt file
     open('successful_codes.txt', 'w').close()
 
-    # Test numbers from 2000 to 3000 using 4 windows
-    start_num = 3501
-    end_num = 4000
+    # Read range from range.txt file
+    try:
+        with open('range.txt', 'r') as f:
+            for line in f:
+                if line.startswith('range1:'):
+                    range_str = line.split(':')[1].strip()
+                    start_num, end_num = map(int, range_str.split('-'))
+                    break
+            else:
+                print("Could not find range1 in range.txt")
+                exit(1)
+    except FileNotFoundError:
+        print("range.txt file not found")
+        exit(1)
+    except Exception as e:
+        print(f"Error reading range.txt: {str(e)}")
+        exit(1)
+
+    # Test numbers using the range from file
     results = test_numbers_in_parallel(start_num, end_num, num_windows=5)
 
     # Print final results
