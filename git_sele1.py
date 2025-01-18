@@ -125,7 +125,7 @@ if __name__ == "__main__":
                     range_number = '1'  # Extract range number from 'range2'
                     break
             else:
-                print("Could not find range2 in range.txt")
+                print("Could not find range1 in range.txt")
                 exit(1)
     except FileNotFoundError:
         print("range.txt file not found")
