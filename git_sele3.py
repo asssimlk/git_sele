@@ -135,7 +135,7 @@ if __name__ == "__main__":
         exit(1)
 
     # Test numbers using the range from file
-    results = test_numbers_in_parallel(start_num, end_num, num_windows=5)
+    results = test_numbers_in_parallel(start_num, end_num, num_windows=7)
 
     # Print final results
     print('\n=== Final Testing Results ===')
