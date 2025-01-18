@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from concurrent.futures import ThreadPoolExecutor
 import time
 import math
+import json
 
 
 def test_number_range(start_num, end_num, url):
@@ -121,9 +122,10 @@ if __name__ == "__main__":
                 if line.startswith('range3:'):
                     range_str = line.split(':')[1].strip()
                     start_num, end_num = map(int, range_str.split('-'))
+                    range_number = '3'  # Extract range number from 'range2'
                     break
             else:
-                print("Could not find range1 in range.txt")
+                print("Could not find range3 in range.txt")
                 exit(1)
     except FileNotFoundError:
         print("range.txt file not found")
@@ -141,12 +143,37 @@ if __name__ == "__main__":
     print('Total working numbers:', len(results['working']))
     print('Total tested numbers:', len(results['working']) + len(results['failed']))
 
-    # Save final results to file
-    with open('promotion_results.txt', 'w') as f:
-        f.write('=== Promotion Code Test Results ===\n')
-        f.write(f'Working numbers: {sorted(results["working"])}\n')
-        f.write(f'Total working numbers: {len(results["working"])}\n')
-        f.write(f'Total tested numbers: {len(results["working"]) + len(results["failed"])}\n')
+    # Save results to JSON file with range number
+    results_filename = f'results{range_number}.json'
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Prepare new data
+    new_data = {
+        "time": current_time,
+        "data": {
+            "working_numbers": sorted(results['working']),
+            "total_working": len(results['working']),
+            "total_tested": len(results['working']) + len(results['failed']),
+            "range_tested": f"{start_num}-{end_num}"
+        }
+    }
+
+    try:
+        # Try to read existing data
+        with open(results_filename, 'r') as f:
+            existing_data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        # If file doesn't exist or is invalid, start with empty data
+        existing_data = {"results": []}
+
+    # Add new data to existing results
+    if "results" not in existing_data:
+        existing_data = {"results": [existing_data]} if existing_data else {"results": []}
+    existing_data["results"].append(new_data)
+
+    # Write back to file
+    with open(results_filename, 'w') as f:
+        json.dump(existing_data, f, indent=4)
 
     end_time = time.time()
     print(f"\nTotal execution time: {end_time - start_time:.2f} seconds")
