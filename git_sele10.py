@@ -30,8 +30,9 @@ def test_number_range(start_num, end_num, url):
                 button = wait.until(ec.presence_of_element_located((By.ID, 'button-redeem')))
 
                 # Enter and submit the code
+                numb = ('FREE' + str(number))
                 input_field.clear()
-                input_field.send_keys(str(number))
+                input_field.send_keys(str(numb))
                 time.sleep(0.2)
                 button.click()
 
