@@ -5,12 +5,13 @@ from selenium.webdriver.support import expected_conditions as ec
 from concurrent.futures import ThreadPoolExecutor
 import time
 import math
+import json
 
 
 def test_number_range(start_num, end_num, url):
     driver = webdriver.Chrome()
     driver.get(url)
-    driver.maximize_window()
+    #driver.maximize_window()
 
     results = {
         'working': [],
@@ -114,9 +115,26 @@ if __name__ == "__main__":
     # Create or clear the successful_codes.txt file
     open('successful_codes.txt', 'w').close()
 
-    # Test numbers from 2000 to 3000 using 4 windows
-    start_num = 5501
-    end_num = 6000
+    # Read range from range.txt file
+    try:
+        with open('range.txt', 'r') as f:
+            for line in f:
+                if line.startswith('range5:'):
+                    range_str = line.split(':')[1].strip()
+                    start_num, end_num = map(int, range_str.split('-'))
+                    range_number = '5'  # Extract range number from 'range2'
+                    break
+            else:
+                print("Could not find range2 in range.txt")
+                exit(1)
+    except FileNotFoundError:
+        print("range.txt file not found")
+        exit(1)
+    except Exception as e:
+        print(f"Error reading range.txt: {str(e)}")
+        exit(1)
+
+    # Test numbers using the range from file
     results = test_numbers_in_parallel(start_num, end_num, num_windows=5)
 
     # Print final results
@@ -125,12 +143,37 @@ if __name__ == "__main__":
     print('Total working numbers:', len(results['working']))
     print('Total tested numbers:', len(results['working']) + len(results['failed']))
 
-    # Save final results to file
-    with open('promotion_results.txt', 'w') as f:
-        f.write('=== Promotion Code Test Results ===\n')
-        f.write(f'Working numbers: {sorted(results["working"])}\n')
-        f.write(f'Total working numbers: {len(results["working"])}\n')
-        f.write(f'Total tested numbers: {len(results["working"]) + len(results["failed"])}\n')
+    # Save results to JSON file with range number
+    results_filename = f'results{range_number}.json'
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Prepare new data
+    new_data = {
+        "time": current_time,
+        "data": {
+            "working_numbers": sorted(results['working']),
+            "total_working": len(results['working']),
+            "total_tested": len(results['working']) + len(results['failed']),
+            "range_tested": f"{start_num}-{end_num}"
+        }
+    }
+
+    try:
+        # Try to read existing data
+        with open(results_filename, 'r') as f:
+            existing_data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        # If file doesn't exist or is invalid, start with empty data
+        existing_data = {"results": []}
+
+    # Add new data to existing results
+    if "results" not in existing_data:
+        existing_data = {"results": [existing_data]} if existing_data else {"results": []}
+    existing_data["results"].append(new_data)
+
+    # Write back to file
+    with open(results_filename, 'w') as f:
+        json.dump(existing_data, f, indent=4)
 
     end_time = time.time()
     print(f"\nTotal execution time: {end_time - start_time:.2f} seconds")
