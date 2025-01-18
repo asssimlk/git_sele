@@ -1,74 +1,136 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
+from concurrent.futures import ThreadPoolExecutor
 import time
+import math
 
 
+def test_number_range(start_num, end_num, url):
+    driver = webdriver.Chrome()
+    driver.get(url)
+    driver.maximize_window()
 
-driver = webdriver.Chrome()
-
-wait = WebDriverWait(driver, 30000)
-url1 = 'https://www.etsy.com/uk/promotions'
-driver.get(url1)
-driver.maximize_window()
-time.sleep(3)
-
-
-def test_numbers(start, end):
     results = {
         'working': [],
         'failed': []
     }
 
-    for number in range(start, end + 1):
-        print(f'Testing number: {number}')
+    try:
+        for number in range(start_num, end_num + 1):
+            try:
+                # Store the current URL
+                initial_url = driver.current_url
 
-        # Find the input field and button
-        input_field = driver.find_element(By.ID, 'input-promotion-code')  # Update with the actual ID
-        button = driver.find_element(By.ID, 'button-redeem')  # Update with the actual ID
+                # Wait for elements with shorter timeout
+                wait = WebDriverWait(driver, 10)
+                input_field = wait.until(ec.presence_of_element_located((By.ID, 'input-promotion-code')))
+                button = wait.until(ec.presence_of_element_located((By.ID, 'button-redeem')))
 
-        # Clear the input field and enter the number
-        input_field.clear()
-        input_field.send_keys(str(number))
-        time.sleep(0.3)
-        button.click()
+                # Enter and submit the code
+                input_field.clear()
+                input_field.send_keys(str(number))
+                time.sleep(0.2)
+                button.click()
 
-        # Wait for a moment to allow the page to process the input
-        time.sleep(1)  # Adjust the sleep time as necessary
+                # Wait briefly for potential redirect
+                time.sleep(0.5)
 
-        # Check for the error message using XPath
-        try:
-            error_message = driver.find_element(By.XPATH, '//*[@id="content"]/div[1]/div[2]/div[1]/form/div[2]/span')
-            if "Please enter a valid promotion code" in error_message.text:
-                print(f' {number} failed: {error_message.text}')
-                results['failed'].append(number)
-                # Refresh the page to continue testing
-                time.sleep(0.3)  # Wait for the page to reload
-                continue  # Skip to the next number
-            else:
-                # If the error message is not found, treat it as success
+                error_message = driver.find_element(By.XPATH,
+                                                    '//*[@id="content"]/div[1]/div[2]/div[1]/form/div[2]/span')
+                if "Please enter a valid promotion code" in error_message.text:
+                    print(f' {number} failed: {error_message.text}')
+                    results['failed'].append(number)
+                    # Refresh the page to continue testing
+                    time.sleep(0.3)  # Wait for the page to reload
+                    continue  # Skip to the next number
+                else:
+                    # If the error message is not found, treat it as success
+                    print(f' {number} treated as success (no error message found)')
+                    results['working'].append(number)
+                    time.sleep(5)  # Wait for 5 seconds before going back to the page
+                    driver.get(url)  # Navigate back to the target page
+                    continue  # Continue to the next number
+            except:
                 print(f' {number} treated as success (no error message found)')
                 results['working'].append(number)
                 time.sleep(5)  # Wait for 5 seconds before going back to the page
-                driver.get('url1')  # Navigate back to the target page
+                driver.get(url)  # Navigate back to the target page
                 continue  # Continue to the next number
-        except:
-            print(f' {number} treated as success (no error message found)')
-            results['working'].append(number)
-            time.sleep(5)  # Wait for 5 seconds before going back to the page
-            driver.get(url1)  # Navigate back to the target page
-            continue  # Continue to the next number
+
+    finally:
+        print(f"\nWindow {start_num}-{end_num} Complete:")
+        print(f"Working numbers: {sorted(results['working'])}")
+        print(f"Failed numbers count: {len(results['failed'])}")
+        print(f"Total tested numbers: {len(results['working']) + len(results['failed'])}\n")
+        driver.quit()
+
+    return results
 
 
+def test_numbers_in_parallel(start, end, num_windows=4):
+    url = 'https://www.etsy.com/uk/promotions'
 
-    print('=== Testing Complete ===')
-    print('Working numbers:', results['working'])
+    # Calculate the range for each window
+    total_numbers = end - start + 1
+    numbers_per_window = math.ceil(total_numbers / num_windows)
+
+    # Create ranges for each window
+    ranges = []
+    current_start = start
+    for i in range(num_windows):
+        current_end = min(current_start + numbers_per_window - 1, end)
+        ranges.append((current_start, current_end))
+        current_start = current_end + 1
+        if current_start > end:
+            break
+
+    final_results = {
+        'working': [],
+        'failed': []
+    }
+
+    with ThreadPoolExecutor(max_workers=num_windows) as executor:
+        future_to_range = {
+            executor.submit(test_number_range, range_start, range_end, url): (range_start, range_end)
+            for range_start, range_end in ranges
+        }
+
+        for future in future_to_range:
+            try:
+                result = future.result()
+                final_results['working'].extend(result['working'])
+                final_results['failed'].extend(result['failed'])
+            except Exception as e:
+                print(f'Thread error: {str(e)}')
+
+    return final_results
+
+
+if __name__ == "__main__":
+    start_time = time.time()
+
+    # Create or clear the successful_codes.txt file
+    open('successful_codes.txt', 'w').close()
+
+    # Test numbers from 2000 to 3000 using 4 windows
+    start_num = 1501
+    end_num = 2000
+    results = test_numbers_in_parallel(start_num, end_num, num_windows=5)
+
+    # Print final results
+    print('\n=== Final Testing Results ===')
+    print('Working numbers:', sorted(results['working']))
     print('Total working numbers:', len(results['working']))
     print('Total tested numbers:', len(results['working']) + len(results['failed']))
 
+    # Save final results to file
+    with open('promotion_results.txt', 'w') as f:
+        f.write('=== Promotion Code Test Results ===\n')
+        f.write(f'Working numbers: {sorted(results["working"])}\n')
+        f.write(f'Total working numbers: {len(results["working"])}\n')
+        f.write(f'Total tested numbers: {len(results["working"]) + len(results["failed"])}\n')
 
-# Run the test
-test_numbers(9201, 9400)  # Adjust the range as needed
-
-# Close the driver after testing
-driver.quit()
+    end_time = time.time()
+    print(f"\nTotal execution time: {end_time - start_time:.2f} seconds")
