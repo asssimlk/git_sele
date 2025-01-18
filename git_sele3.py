@@ -115,8 +115,8 @@ if __name__ == "__main__":
     open('successful_codes.txt', 'w').close()
 
     # Test numbers from 2000 to 3000 using 4 windows
-    start_num = 2001
-    end_num = 2500
+    start_num = 4501
+    end_num = 5000
     results = test_numbers_in_parallel(start_num, end_num, num_windows=5)
 
     # Print final results
