@@ -33,12 +33,6 @@ jobs:
       with:
         name: test-results
         path: results1.json
-        
-    - name: Download a Build Artifact
-      uses: actions/download-artifact@v4.1.8
-      with:
-        name: result-JSON
-        path: results1.json
 
   test-promotion-codes2:
     runs-on: windows-latest
