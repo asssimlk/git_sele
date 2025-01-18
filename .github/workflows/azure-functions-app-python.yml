@@ -4,8 +4,21 @@ on:
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
-  test-promotion-codes1:
+  scan-codes:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        test-file: ['git_sele1.py', 'git_sele2.py', 'git_sele3.py', 'git_sele4.py']
+        include:
+          - test-file: 'git_sele1.py'
+            results-file: 'results1.json'
+          - test-file: 'git_sele2.py'
+            results-file: 'results2.json'
+          - test-file: 'git_sele3.py'
+            results-file: 'results3.json'
+          - test-file: 'git_sele4.py'
+            results-file: 'results4.json'
+      fail-fast: false  # Continue with other jobs even if one fails
     
     steps:
     - uses: actions/checkout@v3
@@ -24,222 +37,31 @@ jobs:
         python -m pip install --upgrade pip
         pip install -U selenium
         pip install webdriver-manager
-    
-    - name: Run promotion code test
-      run: python git_sele1.py
-    
-    - name: Upload results
+        
+    - name: Run scanner - ${{ matrix.test-file }}
+      run: python ${{ matrix.test-file }}
+        
+    - name: Upload Results - ${{ matrix.test-file }}
       uses: actions/upload-artifact@v3
+      if: always()
       with:
-        name: test-results
-        path: results1.json
+        name: scan-results-${{ matrix.test-file }}-${{ github.run_number }}
+        path: |
+          ${{ matrix.results-file }}
+          promotion_results.txt
+        retention-days: 90
 
-  test-promotion-codes2:
-    runs-on: windows-latest
-    
+  combine-results:
+    needs: scan-codes
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: browser-actions/setup-chrome@v1
-      with: 
-        chrome-version: 132
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U selenium
-        pip install webdriver-manager
-    
-    - name: Run promotion code test
-      run: python git_sele2.py
-    
-    - name: Upload results
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Upload Combined Results
       uses: actions/upload-artifact@v3
       with:
-        name: test-results
-        path: results2.json
-
-  test-promotion-codes3:
-    runs-on: windows-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    - uses: browser-actions/setup-chrome@v1
-      with: 
-        chrome-version: 132
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U selenium
-        pip install webdriver-manager
-    
-    - name: Run promotion code test
-      run: python git_sele3.py
-    
-    - name: Upload results
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: results3.json
-
-  test-promotion-codes4:
-    runs-on: windows-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    - uses: browser-actions/setup-chrome@v1
-      with: 
-        chrome-version: 132
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U selenium
-        pip install webdriver-manager
-    
-    - name: Run promotion code test
-      run: python git_sele4.py
-    
-    - name: Upload results
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: results4.json
-
-  test-promotion-codes5:
-    runs-on: windows-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    - uses: browser-actions/setup-chrome@v1
-      with: 
-        chrome-version: 132
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U selenium
-        pip install webdriver-manager
-    
-    - name: Run promotion code test
-      run: python git_sele5.py
-    
-    - name: Upload results
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: results5.json
-
-  test-promotion-codes6:
-    runs-on: windows-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    - uses: browser-actions/setup-chrome@v1
-      with: 
-        chrome-version: 132
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U selenium
-        pip install webdriver-manager
-    
-    - name: Run promotion code test
-      run: python git_sele6.py
-    
-    - name: Upload results
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: results6.json
-
-  test-promotion-codes7:
-    runs-on: windows-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    - uses: browser-actions/setup-chrome@v1
-      with: 
-        chrome-version: 132
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U selenium
-        pip install webdriver-manager
-    
-    - name: Run promotion code test
-      run: python git_sele7.py
-    
-    - name: Upload results
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: results7.json
-
-  test-promotion-codes8:
-    runs-on: windows-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    - uses: browser-actions/setup-chrome@v1
-      with: 
-        chrome-version: 132
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U selenium
-        pip install webdriver-manager
-    
-    - name: Run promotion code test
-      run: python git_sele8.py
-    
-    - name: Upload results
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: results8.json
+        name: all-scan-results-${{ github.run_number }}
+        path: |
+          scan-results-*
+        retention-days: 90
