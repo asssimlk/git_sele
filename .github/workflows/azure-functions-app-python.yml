@@ -32,7 +32,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: test-results
-        path: results.json
+        path: results1.json
 
   test-promotion-codes2:
     runs-on: windows-latest
@@ -62,7 +62,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: test-results
-        path: results.json
+        path: results2.json
 
   test-promotion-codes3:
     runs-on: windows-latest
@@ -92,7 +92,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: test-results
-        path: results.json
+        path: results3.json
 
   test-promotion-codes4:
     runs-on: windows-latest
@@ -122,7 +122,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: test-results
-        path: results.json
+        path: results4.json
 
   test-promotion-codes5:
     runs-on: windows-latest
@@ -152,4 +152,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: test-results
-        path: results.json
+        path: results5.json
